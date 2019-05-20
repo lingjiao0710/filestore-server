@@ -6,6 +6,9 @@ import (
 	"io/ioutil"
 	"os"
 	"fmt"
+	"time"
+	"github.com/lingjiao0710/filestore-server/meta"
+	"github.com/lingjiao0710/filestore-server/util"
 )
 
 //UploadHandler: 处理文件上传
@@ -28,8 +31,14 @@ func UploadHandler(w http.ResponseWriter, r *http.Request){
 
 		defer file.Close()
 
+		fileMeta := meta.FileMeta{
+			FileName: head.Filename,
+			Location: "./" + head.Filename,
+			UploadAt: time.Now().Format("2006-01-02 15:04:05"),
+		}
+
 		//创建本地文件
-		newfile, err := os.Create("./" + head.Filename)
+		newfile, err := os.Create(fileMeta.Location)
 		if err != nil{
 			fmt.Printf("creat file failed, err:%s\n", err.Error())
 			return
@@ -37,12 +46,15 @@ func UploadHandler(w http.ResponseWriter, r *http.Request){
 		defer newfile.Close()
 
 		//复制数据
-		_, err = io.Copy(newfile, file)
+		fileMeta.Filesize, err = io.Copy(newfile, file)
 		if err != nil {
 			fmt.Printf("save data failed, err:%s\n", err.Error())
 			return 
 		}
 
+		newfile.Seek(0, 0)
+		fileMeta.FileSha1 = util.FileSha1(newfile)
+		meta.UpdateFileMeta(fileMeta)
 		//重定向到suc路由
 		http.Redirect(w, r, "/file/upload/suc", http.StatusFound)
 	}
