@@ -23,7 +23,11 @@ func UpdateFileMeta(fmeta FileMeta) {
 }
 
 //GetFileMeta: 通过sha1获取文件元信息
-
 func GetFileMeta(fileSha1 string) FileMeta{
 	return fileMetas[fileSha1]
+}
+
+//RemoveFileMeta: 删除文件元信息
+func RemoveFileMeta(fileSha1 string){
+	delete(fileMetas, fileSha1)
 }
